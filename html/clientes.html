@@ -1,0 +1,137 @@
+<!-- templates/clientes.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form, table {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+
+        form label, table th, table td {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        form input[type="text"],
+        form input[type="email"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        form button, table a {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 3px;
+        }
+
+        form button:hover, table a:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #f0f0f0;
+        }
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .action-buttons {
+            margin-top: 10px;
+        }
+
+        .action-buttons a {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Listado de Clientes</h1>
+
+    <!-- Formulario para agregar un nuevo cliente -->
+    <form action="/clientes/add" method="POST">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" required>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <button type="submit">Agregar Cliente</button>
+    </form>
+
+    <br>
+
+    <!-- Tabla de listado de clientes -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente[0] }}</td>
+                <td>{{ cliente[1] }}</td>
+                <td>{{ cliente[2] }}</td>
+                <td class="action-buttons">
+                    <!-- Botón para ver detalle de un cliente -->
+                    <a href="/clientes/{{ cliente[0] }}">Ver Detalle</a>
+                    <!-- Formulario para actualizar un cliente -->
+                    <form action="/clientes/update/{{ cliente[0] }}" method="POST">
+                        <label for="nombre_update">Nombre:</label>
+                        <input type="text" id="nombre_update" name="nombre" value="{{ cliente[1] }}" required>
+                        <label for="email_update">Email:</label>
+                        <input type="email" id="email_update" name="email" value="{{ cliente[2] }}" required>
+                        <button type="submit">Actualizar</button>
+                    </form>
+                    <!-- Enlace para eliminar un cliente -->
+                    <a href="/clientes/delete/{{ cliente[0] }}" onclick="return confirm('¿Estás seguro de eliminar este cliente?');">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
