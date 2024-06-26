@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 
@@ -26,6 +26,7 @@ def index():
 ### Operaciones CRUD para la tabla Productos ###
 
 # Obtener todos los productos (GET)
+# Obtener todos los productos (GET)
 @app.route('/productos', methods=['GET'])
 def get_productos():
     try:
@@ -45,30 +46,23 @@ def get_producto(id):
         cur.execute("SELECT * FROM Productos WHERE id = %s", (id,))
         producto = cur.fetchone()
         cur.close()
-
         if producto:
-            # Renderiza la plantilla productos.html con el producto como contexto
-            return render_template('productos.html', producto=producto)
+            return render_template('producto_detalle.html', producto=producto) # Asegúrate de tener esta plantilla
         else:
-            # Si el producto no se encuentra, renderiza productos.html con un mensaje de error
             return render_template('productos.html', error='Producto no encontrado'), 404
     except Exception as e:
-        # Maneja cualquier excepción y renderiza productos.html con un mensaje de error genérico
         return render_template('productos.html', error=str(e)), 500
 
-# Agregar un nuevo producto (POST)
 @app.route('/productos/add', methods=['POST'])
 def add_producto():
     try:
         nombre = request.form['nombre']
         precio = request.form['precio']
         stock = request.form['stock']
-
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO Productos (nombre, precio, stock) VALUES (%s, %s, %s)", (nombre, precio, stock))
         mysql.connection.commit()
         cur.close()
-
         return jsonify({'mensaje': 'Producto agregado correctamente'}), 201
     except KeyError as e:
         return jsonify({'error': f'Falta el campo requerido: {str(e)}'}), 400
@@ -76,19 +70,18 @@ def add_producto():
         return jsonify({'error': str(e)}), 500
 
 # Actualizar un producto por su ID (PUT)
-@app.route('/productos/update/<int:id>', methods=['PUT'])
+@app.route('/productos/update/<int:id>', methods=['POST'])
 def update_producto(id):
     try:
-        nombre = request.json['nombre']
-        precio = request.json['precio']
-        stock = request.json['stock']
-
-        cur = mysql.connection.cursor()
-        cur.execute("UPDATE Productos SET nombre=%s, precio=%s, stock=%s WHERE id=%s", (nombre, precio, stock, id))
-        mysql.connection.commit()
-        cur.close()
-
-        return jsonify({'mensaje': 'Producto actualizado correctamente'}), 200
+        if request.form['_method'] == 'PUT':
+            nombre = request.form['nombre']
+            precio = request.form['precio']
+            stock = request.form['stock']
+            cur = mysql.connection.cursor()
+            cur.execute("UPDATE Productos SET nombre=%s, precio=%s, stock=%s WHERE id=%s", (nombre, precio, stock, id))
+            mysql.connection.commit()
+            cur.close()
+            return jsonify({'mensaje': 'Producto actualizado correctamente'}), 200
     except KeyError as e:
         return jsonify({'error': f'Falta el campo requerido: {str(e)}'}), 400
     except Exception as e:
@@ -98,15 +91,14 @@ def update_producto(id):
 @app.route('/productos/delete/<int:id>', methods=['POST'])
 def delete_producto(id):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("DELETE FROM Productos WHERE id = %s", (id,))
-        mysql.connection.commit()
-        cur.close()
-
-        return jsonify({'mensaje': 'Producto eliminado correctamente'}), 200
+        if request.form['_method'] == 'DELETE':
+            cur = mysql.connection.cursor()
+            cur.execute("DELETE FROM Productos WHERE id = %s", (id,))
+            mysql.connection.commit()
+            cur.close()
+            return jsonify({'mensaje': 'Producto eliminado correctamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 ### Operaciones CRUD para la tabla Clientes ###
 
 # Obtener todos los clientes (GET)
@@ -121,7 +113,6 @@ def get_clientes():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Obtener un cliente por su ID (GET)
 @app.route('/clientes/<int:id>', methods=['GET'])
 def get_cliente(id):
     try:
@@ -137,7 +128,6 @@ def get_cliente(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Agregar un nuevo cliente (POST)
 @app.route('/clientes/add', methods=['POST'])
 def add_cliente():
     try:
@@ -149,46 +139,44 @@ def add_cliente():
         mysql.connection.commit()
         cur.close()
 
-        return jsonify({'mensaje': 'Cliente agregado correctamente'}), 201
+        return redirect(url_for('get_clientes'))
     except KeyError as e:
         return jsonify({'error': f'Falta el campo requerido: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Actualizar un cliente por su ID (PUT)
-@app.route('/clientes/update/<int:id>', methods=['PUT'])
+@app.route('/clientes/update/<int:id>', methods=['POST'])
 def update_cliente(id):
     try:
-        nombre = request.form['nombre']
-        email = request.form['email']
+        if request.form['_method'] == 'PUT':
+            nombre = request.form['nombre']
+            email = request.form['email']
 
-        cur = mysql.connection.cursor()
-        cur.execute("UPDATE Clientes SET nombre=%s, email=%s WHERE id=%s", (nombre, email, id))
-        mysql.connection.commit()
-        cur.close()
+            cur = mysql.connection.cursor()
+            cur.execute("UPDATE Clientes SET nombre=%s, email=%s WHERE id=%s", (nombre, email, id))
+            mysql.connection.commit()
+            cur.close()
 
-        return jsonify({'mensaje': 'Cliente actualizado correctamente'}), 200
+        return redirect(url_for('get_clientes'))
     except KeyError as e:
         return jsonify({'error': f'Falta el campo requerido: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Eliminar un cliente por su ID (DELETE)
-@app.route('/clientes/delete/<int:id>', methods=['DELETE'])
+@app.route('/clientes/delete/<int:id>', methods=['POST'])
 def delete_cliente(id):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("DELETE FROM Clientes WHERE id = %s", (id,))
-        mysql.connection.commit()
-        cur.close()
+        if request.form['_method'] == 'DELETE':
+            cur = mysql.connection.cursor()
+            cur.execute("DELETE FROM Clientes WHERE id = %s", (id,))
+            mysql.connection.commit()
+            cur.close()
 
-        return jsonify({'mensaje': 'Cliente eliminado correctamente'}), 200
+        return redirect(url_for('get_clientes'))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 ### Operaciones CRUD para la tabla Pedidos ###
 
-# Obtener todos los pedidos (GET)
 @app.route('/pedidos', methods=['GET'])
 def get_pedidos():
     try:
@@ -219,12 +207,14 @@ def get_pedido(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 # Agregar un nuevo pedido (POST)
 @app.route('/pedidos/add', methods=['POST'])
 def add_pedido():
     try:
-        cliente_id = request.json['cliente_id']
-        fecha_pedido = request.json['fecha_pedido']
+        data = request.get_json()
+        cliente_id = data['cliente_id']
+        fecha_pedido = data['fecha_pedido']
 
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO Pedidos (cliente_id, fecha_pedido) VALUES (%s, %s)", (cliente_id, fecha_pedido))
@@ -236,6 +226,7 @@ def add_pedido():
         return jsonify({'error': f'Falta el campo requerido: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 # Actualizar un pedido por su ID (PUT)
 @app.route('/pedidos/update/<int:id>', methods=['PUT'])
@@ -255,6 +246,7 @@ def update_pedido(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 # Eliminar un pedido por su ID (DELETE)
 @app.route('/pedidos/delete/<int:id>', methods=['DELETE'])
 def delete_pedido(id):
@@ -267,6 +259,7 @@ def delete_pedido(id):
         return jsonify({'mensaje': 'Pedido eliminado correctamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 # Ejecutar la aplicación Flask
 if __name__ == '__main__':
